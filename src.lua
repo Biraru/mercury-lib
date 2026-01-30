@@ -14,10 +14,7 @@
 █░░░░░░██████████░░░░░░█░░░░░░░░░░░░░░█░░░░░░██░░░░░░░░░░█░░░░░░░░░░░░░░█░░░░░░░░░░░░░░█░░░░░░██░░░░░░░░░░███████░░░░░░███████
 ██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-edited: 1/26
-developers:
-discord Abstract#8007
-discord Deity#0228
+For Normal Games
 
 ]]
 
@@ -117,19 +114,25 @@ end
 
 function Library:change_theme(toTheme)
 	Library.CurrentTheme = toTheme
+	
 	local c = self:lighten(toTheme.Tertiary, 20)
-	Library.DisplayName.Text = "Welcome, <font color='rgb(" ..  math.floor(c.R*255) .. "," .. math.floor(c.G*255) .. "," .. math.floor(c.B*255) .. ")'> <b>" .. LocalPlayer.DisplayName .. "</b> </font>"
+	
+	Library.DisplayName.Text = "Welcome, <font color='rgb(" ..  math.floor(c.R*255) .. "," .. math.floor(c.G*255) .. "," .. math.floor(c.B*255) .. ")'><b>" .. LocalPlayer.DisplayName .. "</b></font>"
+	
 	for color, objects in next, Library.ThemeObjects do
 		local themeColor = Library.CurrentTheme[color]
+		
 		for _, obj in next, objects do
 			local element, property, theme, colorAlter = obj[1], obj[2], obj[3], obj[4] or 0
 			local themeColor = Library.CurrentTheme[theme]
 			local modifiedColor = themeColor
+			
 			if colorAlter < 0 then
 				modifiedColor = Library:darken(themeColor, -1 * colorAlter)
 			elseif colorAlter > 0 then
 				modifiedColor = Library:lighten(themeColor, colorAlter)
 			end
+			
 			element:tween{[property] = modifiedColor}
 		end
 	end
@@ -380,13 +383,13 @@ function Library:show(state)
 end
 
 function Library:darken(color, f)
-	local h, s, v = Color3.toHSV(color)
+	local h, s, v = color:ToHSV()
 	f = 1 - ((f or 15) / 80)
 	return Color3.fromHSV(h, math.clamp(s/f, 0, 1), math.clamp(v*f, 0, 1))
 end
 
 function Library:lighten(color, f)
-	local h, s, v = Color3.toHSV(color)
+	local h, s, v = color:ToHSV()
 	f = 1 - ((f or 15) / 80)
 	return Color3.fromHSV(h, math.clamp(s*f, 0, 1), math.clamp(v/f, 0, 1))
 end
@@ -394,13 +397,13 @@ end
 --[[ old lighten/darken functions, may revert if contrast gets fucked up
 
 	function Library:darken(color, f)
-		local h, s, v = Color3.toHSV(color)
+		local h, s, v = color:ToHSV()
 		f = f or 15
 		return Color3.fromHSV(h, s, math.clamp(v - (f/255), 0, 1))
 	end
 
 	function Library:lighten(color, f)
-		local h, s, v = Color3.toHSV(color)
+		local h, s, v = color:ToHSV()
 		f = f or 15
 		return Color3.fromHSV(h, s, math.clamp(v + (f/255), 0, 1))
 	end
@@ -418,32 +421,13 @@ function Library:create(options)
 	local settings = {
 		Theme = "Dark"
 	}
-
-	if readfile and writefile and isfile then
-		if not isfile("MercurySettings.json") then
-			writefile("MercurySettings.json", HTTPService:JSONEncode(settings))
-		end
-		settings = HTTPService:JSONDecode(readfile("MercurySettings.json"))
-		Library.CurrentTheme = Library.Themes[settings.Theme]
-		updateSettings = function(property, value)
-			settings[property] = value
-			writefile("MercurySettings.json", HTTPService:JSONEncode(settings))
-		end
-	end
-
+	
 	options = self:set_defaults({
 		Name = "Mercury",
 		Size = UDim2.fromOffset(600, 400),
 		Theme = self.Themes[settings.Theme],
-		Link = "https://github.com/deeeity/mercury-lib"
+		Link = "https://github.com/Biraru/mercury-lib"
 	}, options)
-
-	if getgenv and getgenv().MercuryUI then
-		getgenv():MercuryUI()
-		getgenv().MercuryUI = nil
-	end
-
-
 
 	if options.Link:sub(-1, -1) == "/" then
 		options.Link = options.Link:sub(1, -2)
@@ -456,6 +440,7 @@ function Library:create(options)
 	self.CurrentTheme = options.Theme
 
 	local gui = self:object("ScreenGui", {
+		IgnoreGuiInset = true,
 		Parent = (RunService:IsStudio() and LocalPlayer.PlayerGui) or game:GetService("CoreGui"),
 		ZIndexBehavior = Enum.ZIndexBehavior.Global
 	})
@@ -586,10 +571,6 @@ function Library:create(options)
 		core:tween({Size = UDim2.new()}, function()
 			gui.AbsoluteObject:Destroy()
 		end)
-	end
-
-	if getgenv then
-		getgenv().MercuryUI = closeUI
 	end
 
 	closeButton.MouseButton1Click:connect(function()
@@ -772,12 +753,12 @@ function Library:create(options)
 	}):round(100)
 
 	local displayName; do
-		local h, s, v = Color3.toHSV(options.Theme.Tertiary)
+		local h, s, v = options.Theme.Tertiary:ToHSV()
 		local c = self:lighten(options.Theme.Tertiary, 20)
 
 		local displayName = profile:object("TextLabel", {
 			RichText = true,
-			Text = "Welcome, <font color='rgb(" ..  math.floor(c.R*255) .. "," .. math.floor(c.G*255) .. "," .. math.floor(c.B*255) .. ")'> <b>" .. LocalPlayer.DisplayName .. "</b> </font>",
+			Text = "Welcome, <font color='rgb(" ..  math.floor(c.R*255) .. "," .. math.floor(c.G*255) .. "," .. math.floor(c.B*255) .. ")'><b>" .. LocalPlayer.DisplayName .. "</b></font>",
 			TextScaled = true,
 			Position = UDim2.new(0, 105,0, 10),
 			Theme = {TextColor3 = {"Tertiary", 10}},
@@ -829,7 +810,7 @@ function Library:create(options)
 		Position = UDim2.new(1, -10, 1, -10),
 		AnchorPoint = Vector2.new(1, 1),
 		Image = "http://www.roblox.com/asset/?id=8559790237"
-	}):tooltip("settings")
+	}):tooltip("Settings")
 
 	local creditsTabIcon = profile:object("ImageButton", {
 		BackgroundTransparency = 1,
@@ -838,7 +819,7 @@ function Library:create(options)
 		Position = UDim2.new(1, -44, 1, -10),
 		AnchorPoint = Vector2.new(1, 1),
 		Image = "http://www.roblox.com/asset/?id=8577523456"
-	}):tooltip("credits")
+	}):tooltip("Credits")
 
 	local quickAccess = homePage:object("Frame", {
 		BackgroundTransparency = 1,
@@ -918,11 +899,7 @@ function Library:create(options)
 	})
 
 	rawset(mt, "creditsContainer", creditsTab.container)
-
-	creditsTab:credit{Name = "Abstract", Description = "UI Library Developer", Discord = "Abstract#8007", V3rmillion = "AbstractPoo"}
-	creditsTab:credit{Name = "Deity", Description = "UI Library Developer", Discord = "Deity#0228", V3rmillion = "0xDEITY"}
-	creditsTab:credit{Name = "Repository", Description = "UI Library Repository", Github="https://github.com/deeeity/mercury-lib/blob/master/src.lua"}
-
+	
 	return mt
 end
 
@@ -1016,7 +993,6 @@ function Library:notification(options)
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Top,
-		TextTransparency = 1
 	})
 
 	text:tween({Size = UDim2.new(1, 0, 0, text.TextBounds.Y)})
@@ -1233,7 +1209,9 @@ function Library:tab(options)
 
 		local visible = {}
 		for _, tab in next, self.Tabs do
-			if not tab[2] == selectedTab then tab[1].Visible = false end
+			if tab[2] ~= selectedTab then
+				tab[1].Visible = false
+			end
 			if tab[2].Visible then
 				visible[#visible+1] = tab
 			end
@@ -2740,7 +2718,6 @@ function Library:credit(options)
 		Name = "Creditor",
 		Description = nil
 	}, options)
-	options.V3rmillion = options.V3rmillion or options.V3rm
 
 	local creditContainer = (self.creditsContainer or self.container):object("Frame", {
 		Theme = {BackgroundColor3 = "Secondary"},
@@ -2769,107 +2746,78 @@ function Library:credit(options)
 		})
 	end
 	
+	print(options.Github)
 	
-
-	if setclipboard then
-	
-		if options.Github then
-			local githubContainer = creditContainer:object("TextButton", {
-				AnchorPoint = Vector2.new(1, 1),
-				Size = UDim2.fromOffset(24, 24),
-				Position = UDim2.new(1, -8, 1, -8),
-				Theme = {BackgroundColor3 = {"Main", 10}}
-			}):round(5):tooltip("copy github")
-			local github = githubContainer:object("ImageLabel", {
-				Image = "http://www.roblox.com/asset/?id=11965755499",
-				Size = UDim2.new(1, -4, 1, -4),
-				Centered = true,
-				BackgroundTransparency = 1
-			}):round(100)
-
-			githubContainer.MouseButton1Click:connect(function()
-				setclipboard(options.Github)
-			end)
-		end
-	
-		if options.Discord then
-			local discordContainer = creditContainer:object("TextButton", {
-				AnchorPoint = Vector2.new(1, 1),
-				Size = UDim2.fromOffset(24, 24),
-				Position = UDim2.new(1, -8, 1, -8),
-				BackgroundColor3 = Color3.fromRGB(88, 101, 242)
-			}):round(5):tooltip("copy discord")
-			local discord = discordContainer:object("Frame", {
-				Size = UDim2.new(1, -6, 1, -6),
-				Centered = true,
-				BackgroundTransparency = 1
-			})
-
-			local tr = discord:object("ImageLabel", {
-				BackgroundTransparency = 1,
-				AnchorPoint = Vector2.new(1, 0),
-				Size = UDim2.new(0.5, 0, 0.5, 0),
-				Position = UDim2.new(1, 0, 0, -0),
-				ImageColor3 = Color3.fromRGB(255, 255, 255),
-				Image = "http://www.roblox.com/asset/?id=8594150191",
-				ScaleType = Enum.ScaleType.Crop
-			})
-
-			local tl = discord:object("ImageLabel", {
-				BackgroundTransparency = 1,
-				AnchorPoint = Vector2.new(0, 0),
-				Size = UDim2.new(0.5, 0, 0.5, 0),
-				Position = UDim2.new(0, 0, 0, -0),
-				ImageColor3 = Color3.fromRGB(255, 255, 255),
-				Image = "http://www.roblox.com/asset/?id=8594187532",
-				ScaleType = Enum.ScaleType.Crop
-			})
-
-			local bl = discord:object("ImageLabel", {
-				BackgroundTransparency = 1,
-				AnchorPoint = Vector2.new(0, 1),
-				Size = UDim2.new(0.5, 0, 0.5, 0),
-				Position = UDim2.new(0, 0, 1, 0),
-				ImageColor3 = Color3.fromRGB(255, 255, 255),
-				Image = "http://www.roblox.com/asset/?id=8594194954",
-				ScaleType = Enum.ScaleType.Crop
-			})
-
-			local br = discord:object("ImageLabel", {
-				BackgroundTransparency = 1,
-				AnchorPoint = Vector2.new(1, 1),
-				Size = UDim2.new(0.5, 0, 0.5, 0),
-				Position = UDim2.new(1, 0, 1, 0),
-				ImageColor3 = Color3.fromRGB(255, 255, 255),
-				Image = "http://www.roblox.com/asset/?id=8594206483",
-				ScaleType = Enum.ScaleType.Crop
-			})
-
-			discordContainer.MouseButton1Click:connect(function()
-				setclipboard(options.Discord)
-			end)
-		end
-
-		if options.V3rmillion then
-			local v3rmillionContainer = creditContainer:object("TextButton", {
-				AnchorPoint = Vector2.new(1, 1),
-				Size = UDim2.fromOffset(24, 24),
-				Position = UDim2.new(1, -40, 1, -8),
-				Theme = {BackgroundColor3 = {"Main", 10}}
-			}):round(5):tooltip("copy v3rm")
-			local v3rmillion = v3rmillionContainer:object("ImageLabel", {
-				Image = "http://www.roblox.com/asset/?id=8594086769",
-				Size = UDim2.new(1, -4, 1, -4),
-				Centered = true,
-				BackgroundTransparency = 1
-			})
-
-			v3rmillionContainer.MouseButton1Click:connect(function()
-				setclipboard(options.V3rmillion)
-			end)
-		end
+	if options.Github then
+		local githubContainer = creditContainer:object("TextButton", {
+			AnchorPoint = Vector2.new(1, 1),
+			Size = UDim2.fromOffset(24, 24),
+			Position = UDim2.new(1, -8, 1, -8),
+			Theme = {BackgroundColor3 = {"Main", 10}}
+		}):round(5):tooltip(options.Github)
+		
+		local github = githubContainer:object("ImageLabel", {
+			Image = "http://www.roblox.com/asset/?id=11965755499",
+			Size = UDim2.new(1, -4, 1, -4),
+			Centered = true,
+			BackgroundTransparency = 1
+		}):round(100)
 	end
 
+	if options.Discord then
+		local discordContainer = creditContainer:object("TextButton", {
+			AnchorPoint = Vector2.new(1, 1),
+			Size = UDim2.fromOffset(24, 24),
+			Position = UDim2.new(1, -8, 1, -8),
+			BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+		}):round(5):tooltip(options.Discord)
+		
+		local discord = discordContainer:object("Frame", {
+			Size = UDim2.new(1, -6, 1, -6),
+			Centered = true,
+			BackgroundTransparency = 1
+		})
+
+		local tr = discord:object("ImageLabel", {
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(1, 0),
+			Size = UDim2.new(0.5, 0, 0.5, 0),
+			Position = UDim2.new(1, 0, 0, -0),
+			ImageColor3 = Color3.fromRGB(255, 255, 255),
+			Image = "http://www.roblox.com/asset/?id=8594150191",
+			ScaleType = Enum.ScaleType.Crop
+		})
+
+		local tl = discord:object("ImageLabel", {
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(0, 0),
+			Size = UDim2.new(0.5, 0, 0.5, 0),
+			Position = UDim2.new(0, 0, 0, -0),
+			ImageColor3 = Color3.fromRGB(255, 255, 255),
+			Image = "http://www.roblox.com/asset/?id=8594187532",
+			ScaleType = Enum.ScaleType.Crop
+		})
+
+		local bl = discord:object("ImageLabel", {
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(0, 1),
+			Size = UDim2.new(0.5, 0, 0.5, 0),
+			Position = UDim2.new(0, 0, 1, 0),
+			ImageColor3 = Color3.fromRGB(255, 255, 255),
+			Image = "http://www.roblox.com/asset/?id=8594194954",
+			ScaleType = Enum.ScaleType.Crop
+		})
+
+		local br = discord:object("ImageLabel", {
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(1, 1),
+			Size = UDim2.new(0.5, 0, 0.5, 0),
+			Position = UDim2.new(1, 0, 1, 0),
+			ImageColor3 = Color3.fromRGB(255, 255, 255),
+			Image = "http://www.roblox.com/asset/?id=8594206483",
+			ScaleType = Enum.ScaleType.Crop
+		})
+	end
 
 	self._resize_tab({
 		container = self.creditsContainer or self.container,
